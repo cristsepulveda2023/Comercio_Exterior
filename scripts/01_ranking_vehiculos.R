@@ -239,3 +239,75 @@ alemania_modelos |>
        caption = "Fuente: elaboración propia con datos DIN 2025, Servicio Nacional de Aduanas.") +
   theme_minimal(base_size = 11)
 ggsave("output/graficos/3_modelos_desde_alemania_2025.png", width = 8, height = 5, dpi = 200)
+
+# -----------------------------------------------------------------------------
+# RESULTADO 4: los 5 SUV fabricados en Alemania más importados
+# -----------------------------------------------------------------------------
+top5_suv <- alemania_modelos |>
+  filter(tipo == "SUV / station wagon") |>
+  slice_head(n = 5) |>
+  guardar("4_top5_suv_desde_alemania_2025")
+
+print(top5_suv)
+
+top5_suv |>
+  mutate(etiqueta = fct_reorder(str_c(marca, " ", modelo), unidades)) |>
+  ggplot(aes(unidades, etiqueta, fill = marca)) +
+  geom_col() +
+  geom_text(aes(label = number(unidades, big.mark = ".", decimal.mark = ",")),
+            hjust = -0.1, size = 3.5) +
+  scale_x_continuous(expand = expansion(c(0, 0.12))) +
+  labs(title = "Los 5 SUV fabricados en Alemania más importados por Chile, 2025",
+       x = "Unidades importadas", y = NULL, fill = "Marca",
+       caption = "Fuente: elaboración propia con datos DIN 2025, Servicio Nacional de Aduanas.") +
+  theme_minimal(base_size = 11)
+ggsave("output/graficos/4_top5_suv_desde_alemania_2025.png", width = 8, height = 3.5, dpi = 200)
+
+# -----------------------------------------------------------------------------
+# RESULTADO 5: ¿las importaciones se parecen a las ventas? (validación con BMW)
+#   Ventas: BMW Chile 2025, publicadas por Autocosmos (13-01-2026)
+#   https://noticias.autocosmos.cl/2026/01/13/bmw-chile-cierra-el-2025-lleno-de-optimismo
+# -----------------------------------------------------------------------------
+ventas_bmw <- read_csv("data/raw/ventas_bmw_chile_2025.csv", show_col_types = FALSE)
+
+# Agrupa los modelos importados en las mismas "familias" que usa BMW
+familia_bmw <- function(modelo) {
+  case_when(str_detect(modelo, "^I") ~ "GAMA I",     # eléctricos: iX, iX1, i4, i5...
+            TRUE                     ~ modelo)
+}
+
+imp_bmw <- livianos |>
+  filter(marca == "BMW") |>
+  mutate(modelo = familia_bmw(modelo),
+         desde_alemania = PA_ORIG == COD_ALEMANIA) |>
+  group_by(modelo) |>
+  summarise(importados_total    = sum(CANT_MERC),
+            importados_alemania = sum(CANT_MERC[desde_alemania]),
+            .groups = "drop")
+
+comparacion_bmw <- ventas_bmw |>
+  left_join(imp_bmw, by = "modelo") |>
+  mutate(across(starts_with("importados"), \(x) coalesce(x, 0)),
+         pct_desde_alemania = importados_alemania / importados_total) |>
+  guardar("5_bmw_ventas_vs_importaciones_2025")
+
+print(comparacion_bmw)
+
+comparacion_bmw |>
+  select(modelo, `Vendidos en Chile` = ventas_2025,
+         `Importados desde Alemania` = importados_alemania) |>
+  tidyr::pivot_longer(-modelo, names_to = "serie", values_to = "unidades") |>
+  mutate(modelo = fct_reorder(modelo, unidades, .fun = max)) |>
+  ggplot(aes(unidades, modelo, fill = serie)) +
+  geom_col(position = position_dodge(width = 0.8), width = 0.75) +
+  geom_text(aes(label = unidades), position = position_dodge(width = 0.8),
+            hjust = -0.15, size = 3) +
+  scale_x_continuous(expand = expansion(c(0, 0.1))) +
+  scale_fill_manual(values = c("Vendidos en Chile" = "#2f5d8a",
+                               "Importados desde Alemania" = "#9bbcd9")) +
+  labs(title = "BMW en Chile 2025: unidades vendidas vs. importadas desde Alemania",
+       x = "Unidades", y = NULL, fill = NULL,
+       caption = "Fuentes: ventas BMW Chile (Autocosmos, 2026); importaciones DIN 2025, Servicio Nacional de Aduanas.") +
+  theme_minimal(base_size = 11) +
+  theme(legend.position = "top")
+ggsave("output/graficos/5_bmw_ventas_vs_importaciones_2025.png", width = 8, height = 5, dpi = 200)
