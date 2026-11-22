@@ -1,0 +1,11 @@
+.Rproj.user/
+.Rhistory
+.RData
+.Ruserdata
+~$*
+*.tmp
+
+# no se publican
+docs/materiales_profe/
+docs/informe/
+data/processed/_antiguos/
