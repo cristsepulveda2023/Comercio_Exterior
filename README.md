@@ -8,11 +8,13 @@ Integrantes: Javier Cáceres, José Muñoz, Cristóbal Sepúlveda
 
 ## ¿Qué hay en este repositorio?
 
-Aquí está el **estudio de mercado** de nuestro trabajo. Usamos **datos reales de importación del año 2025** publicados por el Servicio Nacional de Aduanas para responder tres preguntas:
+Aquí está el **estudio de mercado** de nuestro trabajo. Usamos **datos reales de importación del año 2025** publicados por el Servicio Nacional de Aduanas para responder estas preguntas:
 
 1. ¿Qué **modelos de vehículos** llegaron más a Chile en 2025?
 2. ¿Qué **tipos de vehículo** (SUV, camioneta, automóvil, etc.) se importan más?
 3. ¿Qué modelos se **fabricaron en Alemania** y llegaron a Chile?
+4. ¿Cuáles son los **5 SUV alemanes** más importados?
+5. ¿Lo que se importa se parece a lo que **realmente se vende**?
 
 Con esas respuestas elegimos el vehículo que importa nuestra empresa y justificamos una cantidad y un precio realistas.
 
@@ -48,6 +50,30 @@ En 2025 llegaron **4.133 vehículos livianos fabricados en Alemania**, el 1,4% d
 
 *FOB = precio del auto puesto en el barco en Alemania. CIF = FOB + flete + seguro hasta Chile.*
 
+### 4. Los 5 SUV fabricados en Alemania más importados
+
+Como nuestra empresa se enfoca en **SUV** (el 59% de los autos nuevos vendidos en Ñuble en 2025), filtramos solo este tipo de vehículo:
+
+| # | SUV (versión más importada) | Motor | Unidades 2025 | Código arancelario |
+|---|---|---|---:|---|
+| 1 | Mercedes-Benz GLC 220d 4MATIC | Diésel 2.0 | 557 | 8703.32.91 |
+| 2 | BMW X1 sDrive18i | Bencina 1.5 | 454 | 8703.22.91 |
+| 3 | Mercedes-Benz GLA 200 | Bencina 1.3 | 280 | 8703.22.91 |
+| 4 | Opel Grandland Hybrid | Híbrido (bencina) | 166 | 8703.40.24 |
+| 5 | BMW X3 20 xDrive | Bencina 2.0 | 147 | 8703.23.91 |
+
+![Top 5 SUV desde Alemania](output/graficos/4_top5_suv_desde_alemania_2025.png)
+
+### 5. ¿Lo importado se parece a lo vendido?
+
+Los datos de Aduanas muestran lo que **entró** al país, no lo que se **vendió**. Como no hay estadísticas públicas de ventas para todos los modelos, comparamos con las ventas que publicó **BMW Chile** para 2025.
+
+En los modelos que se fabrican en Alemania (X1, Serie 4, Serie 1, X2), las unidades importadas desde Alemania se parecen bastante a las vendidas. En cambio, en modelos como la Serie 2 o el X3 se vende mucho más de lo que llega desde Alemania, porque esos modelos se fabrican principalmente en otros países.
+
+**Conclusión:** para los modelos fabricados en Alemania, las importaciones son una buena aproximación de las ventas.
+
+![BMW ventas vs importaciones](output/graficos/5_bmw_ventas_vs_importaciones_2025.png)
+
 Las tablas completas están en la carpeta [`output/tablas`](output/tablas).
 
 ---
@@ -59,6 +85,7 @@ Las tablas completas están en la carpeta [`output/tablas`](output/tablas).
 | **Servicio Nacional de Aduanas** – Registro de Importaciones 2025 | Todas las Declaraciones de Ingreso (DIN) del año: qué se importó, desde qué país, cuántas unidades, a qué precio, con qué flete y seguro | [datos.gob.cl – Servicio Nacional de Aduanas](https://datos.gob.cl/organization/servicio_nacional_de_aduanas) |
 | **Aduanas** – Descripción y estructura de datos | El "diccionario" que explica qué significa cada columna | Misma página (archivo incluido en `data/raw/`) |
 | **ANAC** – Informe Mercado Automotor diciembre 2025 | Ventas de autos nuevos en Chile por marca y por región (incluye Ñuble) | [anac.cl](https://www.anac.cl/wp-content/uploads/2026/01/12-ANAC-Mercado-Automotor-Diciembre-2025.pdf) |
+| **Autocosmos** – "BMW Chile cierra el 2025 lleno de optimismo" (13-01-2026) | Ventas de BMW en Chile 2025 por modelo (archivo incluido en `data/raw/`) | [autocosmos.cl](https://noticias.autocosmos.cl/2026/01/13/bmw-chile-cierra-el-2025-lleno-de-optimismo) |
 
 ---
 
@@ -77,6 +104,8 @@ Así pasamos de casi 5 millones de registros a unos 31.000.
 **Paso 4 – Ordenar la información.** Cada importador escribe la descripción del vehículo a su manera (por ejemplo "MERCEDES BENZ", "MERCEDEZ" o "MERCEDES-BENZ"). Por eso unificamos los nombres de **marca**, **modelo** y **tipo de vehículo** (SUV, automóvil, camioneta, etc.).
 
 **Paso 5 – Contar y graficar.** Sumamos las unidades importadas por modelo, por tipo y por país, calculamos los precios promedio y armamos los gráficos que se ven arriba.
+
+**Paso 6 – Comparar con ventas reales.** Cruzamos las importaciones de BMW con las ventas que la marca informó para 2025, para comprobar si lo importado sirve como aproximación de lo vendido.
 
 ---
 
@@ -97,11 +126,12 @@ Así pasamos de casi 5 millones de registros a unos 31.000.
 ├── data/
 │   ├── raw/                 ← datos originales, tal como se descargaron
 │   │   ├── din_2025/        ← 12 archivos mensuales de Aduanas (.rar)
-│   │   └── descripcion-y-estructura-de-datos-.xlsx
+│   │   ├── descripcion-y-estructura-de-datos-.xlsx
+│   │   └── ventas_bmw_chile_2025.csv   ← ventas BMW 2025 (Autocosmos)
 │   └── processed/           ← datos ya filtrados (solo vehículos)
 ├── scripts/                 ← instrucciones que hacen el trabajo automáticamente
 │   ├── 00_extraer_filtrar_din.py   ← pasos 1 a 3 (descomprimir y filtrar)
-│   └── 01_ranking_vehiculos.R      ← pasos 4 y 5 (ordenar, contar, graficar)
+│   └── 01_ranking_vehiculos.R      ← pasos 4 a 6 (ordenar, contar, graficar, comparar)
 └── output/
     ├── tablas/              ← resultados en formato Excel/CSV
     └── graficos/            ← gráficos usados en el informe y la presentación
